@@ -26,6 +26,38 @@ _Netzwerk- & Dateidienste → SNMP_, UniFi _Einstellungen → System → SNMP_,
 MikroTik _IP → SNMP_, ein Linux-Server `snmpd` (`/etc/snmp/snmpd.conf`), eine
 Eaton- oder APC-Netzwerkkarte _Network → SNMP_.
 
+## Automatische Erkennung
+
+Am einfachsten: Lass Gladys deine Geräte finden.
+
+1. Trage unter **Konfiguration** deine **Community** ein (Abschnitt
+   _SNMP-Zugang_), falls sie nicht `public` ist, und speichere.
+2. Öffne den Tab **Erkennung** und klicke auf **Scannen**.
+3. Gladys sendet eine SNMP-Anfrage (Lesen von `sysName`) per Broadcast in
+   dein lokales Netzwerk, UDP-Port 161. Jedes Gerät, das antwortet, erscheint
+   mit seinem SNMP-Namen.
+4. Klicke bei den Geräten, die du verfolgen willst, auf **Erstellen**.
+
+Die Profile werden automatisch gewählt: `host`, wenn das Gerät
+HOST-RESOURCES hat (CPU, Speicher, Festplatten), `ups`, wenn es UPS-MIB hat.
+Schnittstellen und eigene OIDs werden weiterhin in der Liste angegeben
+(siehe unten).
+
+Gut zu wissen:
+
+- Der Scan nutzt SNMP v2c (v1, wenn du v1 gewählt hast) und die Community der
+  Konfiguration. Sie geht per Broadcast an das ganze lokale Netzwerk: In
+  v1/v2c wird sie ohnehin im Klartext übertragen.
+- Nur Port 161 und das lokale Netzwerk des Gladys-Servers werden abgedeckt.
+  Ein Gerät **nur mit SNMP v3**, auf einem anderen Port oder hinter einem
+  Router wird von Hand in der Liste unten angegeben.
+- Manche Geräte ignorieren Broadcast-Anfragen: Trage sie ebenfalls von Hand
+  ein.
+- Erkannte Geräte müssen nicht in der Liste stehen: Gladys behält sie. Lösche
+  das Gerät in Gladys, um es nicht mehr zu verfolgen.
+- Der Scan braucht ein Gladys mit Netzwerkerkennung („aktiver“ Scan): Auf
+  einer älteren Version findet er nichts, und das Protokoll sagt es.
+
 ## Konfiguration
 
 Öffne den Reiter **Konfiguration** der Integration.
@@ -226,6 +258,10 @@ seinen Einstellungen ein Gerät, um auch dessen Live-Werte zu sehen
 
 ## Fehlerbehebung
 
+- **Der Scan findet nichts** — prüfe Community und Version unter
+  _SNMP-Zugang_ und ob das Gerät im selben lokalen Netzwerk wie der
+  Gladys-Server ist. Ein Gerät, das Broadcasts ignoriert oder nur SNMP v3
+  spricht, wird von Hand eingetragen.
 - **Ein Gerät bleibt nicht erreichbar** — prüfe, ob SNMP aktiv ist, ob die
   Community (oder der v3-Benutzer und die Schlüssel) stimmt und ob das Gerät
   Anfragen von der Adresse deines Gladys-Servers annimmt. Schalte

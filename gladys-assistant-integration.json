@@ -14,6 +14,7 @@
   "cover_image": "https://raw.githubusercontent.com/prohand/gladys-snmp/main/cover.png",
   "categories": ["network", "protocols"],
   "transports": ["local"],
+  "network_discovery": [{ "type": "udp-active-broadcast", "ports": [161] }],
   "config_schema": [
     {
       "key": "intro",
@@ -25,10 +26,10 @@
         "es": "Primeros pasos"
       },
       "description": {
-        "en": "Gladys reads your equipment over SNMP on your local network (UDP 161): switches, routers, Wi-Fi access points, NAS, servers, UPS, printers. Enable SNMP on each device (v2c with a read-only community is the simplest), then list the devices below. Each one becomes a Gladys device: reachable, response time and uptime, plus the profiles you pick (interfaces, host, ups) and your own OIDs.",
-        "fr": "Gladys lit vos équipements en SNMP sur votre réseau local (UDP 161) : switchs, routeurs, bornes Wi-Fi, NAS, serveurs, onduleurs, imprimantes. Activez SNMP sur chaque équipement (v2c avec une communauté en lecture seule, c'est le plus simple), puis listez-les ci-dessous. Chacun devient un appareil Gladys : joignable, temps de réponse et uptime, plus les profils choisis (interfaces, host, ups) et vos propres OID.",
-        "de": "Gladys liest deine Geräte per SNMP in deinem lokalen Netzwerk (UDP 161): Switches, Router, WLAN-Access-Points, NAS, Server, USV, Drucker. Aktiviere SNMP auf jedem Gerät (v2c mit einer Read-only-Community ist am einfachsten) und liste die Geräte unten auf. Jedes wird zu einem Gladys-Gerät: erreichbar, Antwortzeit und Laufzeit, dazu die gewählten Profile (interfaces, host, ups) und eigene OIDs.",
-        "es": "Gladys lee sus equipos por SNMP en su red local (UDP 161): switches, routers, puntos de acceso Wi-Fi, NAS, servidores, SAI, impresoras. Active SNMP en cada equipo (v2c con una comunidad de solo lectura es lo más sencillo) y lístelos abajo. Cada uno se convierte en un dispositivo Gladys: accesible, tiempo de respuesta y tiempo activo, más los perfiles elegidos (interfaces, host, ups) y sus propios OID."
+        "en": "Gladys reads your equipment over SNMP on your local network (UDP 161): switches, routers, Wi-Fi access points, NAS, servers, UPS, printers. Enable SNMP on each device (v2c with a read-only community is the simplest), then click Scan in the Discovery tab, or list the devices below. Each one becomes a Gladys device: reachable, response time and uptime, plus the profiles you pick (interfaces, host, ups) and your own OIDs.",
+        "fr": "Gladys lit vos équipements en SNMP sur votre réseau local (UDP 161) : switchs, routeurs, bornes Wi-Fi, NAS, serveurs, onduleurs, imprimantes. Activez SNMP sur chaque équipement (v2c avec une communauté en lecture seule, c'est le plus simple), puis cliquez sur Scanner dans l'onglet Découverte, ou listez-les ci-dessous. Chacun devient un appareil Gladys : joignable, temps de réponse et uptime, plus les profils choisis (interfaces, host, ups) et vos propres OID.",
+        "de": "Gladys liest deine Geräte per SNMP in deinem lokalen Netzwerk (UDP 161): Switches, Router, WLAN-Access-Points, NAS, Server, USV, Drucker. Aktiviere SNMP auf jedem Gerät (v2c mit einer Read-only-Community ist am einfachsten) und klicke im Tab Erkennung auf Scannen oder liste die Geräte unten auf. Jedes wird zu einem Gladys-Gerät: erreichbar, Antwortzeit und Laufzeit, dazu die gewählten Profile (interfaces, host, ups) und eigene OIDs.",
+        "es": "Gladys lee sus equipos por SNMP en su red local (UDP 161): switches, routers, puntos de acceso Wi-Fi, NAS, servidores, SAI, impresoras. Active SNMP en cada equipo (v2c con una comunidad de solo lectura es lo más sencillo) y pulse Escanear en la pestaña Descubrimiento, o lístelos abajo. Cada uno se convierte en un dispositivo Gladys: accesible, tiempo de respuesta y tiempo activo, más los perfiles elegidos (interfaces, host, ups) y sus propios OID."
       },
       "links": [
         {
@@ -52,10 +53,10 @@
         "es": "Agentes SNMP"
       },
       "description": {
-        "en": "The devices to read, separated by commas: host[:port];name;profiles — e.g. 192.168.1.10;NAS;host, 192.168.1.20;UPS;ups. Profiles: interfaces, host, ups (join several with +). For interfaces, custom OIDs or per-device credentials, paste a JSON list instead: see the documentation.",
-        "fr": "Les équipements à lire, séparés par des virgules : hôte[:port];nom;profils — ex. 192.168.1.10;NAS;host, 192.168.1.20;Onduleur;ups. Profils : interfaces, host, ups (plusieurs avec +). Pour les interfaces, des OID personnalisés ou des identifiants par équipement, collez plutôt une liste JSON : voir la documentation.",
-        "de": "Die zu lesenden Geräte, durch Kommas getrennt: Host[:Port];Name;Profile — z. B. 192.168.1.10;NAS;host, 192.168.1.20;USV;ups. Profile: interfaces, host, ups (mehrere mit +). Für Schnittstellen, eigene OIDs oder Zugangsdaten pro Gerät füge stattdessen eine JSON-Liste ein: siehe Dokumentation.",
-        "es": "Los equipos a leer, separados por comas: host[:puerto];nombre;perfiles — p. ej. 192.168.1.10;NAS;host, 192.168.1.20;SAI;ups. Perfiles: interfaces, host, ups (varios con +). Para interfaces, OID personalizados o credenciales por equipo, pegue una lista JSON: consulte la documentación."
+        "en": "Devices found by the scan need not be listed. Others, separated by commas: host[:port];name;profiles — e.g. 192.168.1.10;NAS;host, 192.168.1.20;UPS;ups. Profiles: interfaces, host, ups (join several with +). For interfaces, custom OIDs or per-device credentials, paste a JSON list instead: see the documentation.",
+        "fr": "Inutile d'y mettre ceux trouvés par le scan. Les autres, séparés par des virgules : hôte[:port];nom;profils — ex. 192.168.1.10;NAS;host, 192.168.1.20;Onduleur;ups. Profils : interfaces, host, ups (plusieurs avec +). Pour les interfaces, des OID personnalisés ou des identifiants par équipement, collez plutôt une liste JSON : voir la documentation.",
+        "de": "Vom Scan gefundene Geräte gehören nicht hierher. Die anderen, durch Kommas getrennt: Host[:Port];Name;Profile — z. B. 192.168.1.10;NAS;host, 192.168.1.20;USV;ups. Profile: interfaces, host, ups (mehrere mit +). Für Schnittstellen, eigene OIDs oder Zugangsdaten pro Gerät füge stattdessen eine JSON-Liste ein: siehe Dokumentation.",
+        "es": "Los equipos hallados por el escaneo no hace falta listarlos. Los demás, separados por comas: host[:puerto];nombre;perfiles — p. ej. 192.168.1.10;NAS;host, 192.168.1.20;SAI;ups. Perfiles: interfaces, host, ups (varios con +). Para interfaces, OID personalizados o credenciales por equipo, pegue una lista JSON: consulte la documentación."
       },
       "required": false,
       "placeholder": {

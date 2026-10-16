@@ -13,9 +13,9 @@ GET, SNMP SET, poll now) and an "SNMP agents" dashboard widget.
 Two runtime dependencies: `@gladysassistant/integration-sdk` and
 [`net-snmp`](https://github.com/markabrahams/node-net-snmp) (pure JavaScript, no native build).
 
-Agents are not discovered on the network: the user lists them in the configuration, in a short
-form (`host[:port];name;profile+profile`, separated by commas) or as a JSON list (interfaces,
-custom OIDs, per-agent credentials).
+Agents are found by the Discovery tab's scan (an SNMP GET broadcast by the Gladys core) or listed
+by the user in the configuration, in a short form (`host[:port];name;profile+profile`, separated
+by commas) or as a JSON list (interfaces, custom OIDs, per-agent credentials).
 
 ## Commands
 
@@ -45,10 +45,12 @@ src/i18n.js                  the languages of user-facing text: en, fr, de, es
 src/logging.js               "Detailed logs" switch -> LOG_LEVEL
 src/actions.js               Configuration screen buttons: test, list interfaces, walk an OID
 src/snmp/client.js           net-snmp behind get / subtree / set / close (the only network code)
+src/snmp/broadcast.js        the BER GetRequest the scan broadcasts, GetResponse check
 src/snmp/oids.js             standard OIDs: SNMPv2-MIB, IF-MIB, HOST-RESOURCES-MIB, UPS-MIB
 src/snmp/values.js           varbind -> number / text, Counter64, counter rates and wraps
 src/agents/device.js         one agent -> one Gladys device (features per profile + custom OIDs)
 src/agents/monitor.js        poll, publish changed states, transitions, SET, walk
+src/agents/discovery.js      network scan (via the core), discovered agents rebuilt from devices
 src/capabilities/scenes.js   scene triggers and scene actions (Gladys 5.1+)
 src/capabilities/widget.js   the "SNMP agents" widget (Gladys 5.1+)
 ```
@@ -75,6 +77,9 @@ src/capabilities/widget.js   the "SNMP agents" widget (Gladys 5.1+)
 - **Every feature declares `min` and `max`** (NOT NULL in Gladys), binary ones included.
 - **Transport badge** per device: `local` when the agent answered, `unreachable` otherwise. The
   manifest declares `"transports": ["local"]`: SNMP never goes through a cloud.
+- **Discovered agents live in Gladys, not in the list**: a created one is rebuilt from its
+  device params (`host`, `port`, `version`, `profiles`, `discovered`) with the credentials of
+  the configuration. The list wins on an id clash. A params name is stored: never rename it.
 - **Secrets**: communities and v3 keys are never logged, never put in a message or an event.
 - **Tests never touch the network**: `test/helpers/fakeAgent.js` stands in for the client.
   `test/client.test.js` is the only one using real sockets, on 127.0.0.1 only, against a

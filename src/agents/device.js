@@ -234,6 +234,13 @@ export function buildDevice(gladys, agent) {
       { name: 'host', value: agent.host },
       { name: 'port', value: String(agent.port) },
       { name: 'version', value: agent.version },
+      // A discovered agent is in no list: Gladys keeps it for us, in these.
+      ...(agent.discovered
+        ? [
+            { name: 'profiles', value: agent.profiles.join('+') },
+            { name: 'discovered', value: 'true' },
+          ]
+        : []),
     ],
     features,
   };

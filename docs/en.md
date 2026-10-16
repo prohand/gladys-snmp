@@ -24,6 +24,36 @@ _Network & File Services → SNMP_, UniFi _Settings → System → SNMP_,
 MikroTik _IP → SNMP_, a Linux server `snmpd` (`/etc/snmp/snmpd.conf`), an
 Eaton or APC network card _Network → SNMP_.
 
+## Automatic discovery
+
+The simplest way: let Gladys find your devices.
+
+1. In **Configuration**, enter your **community** (_SNMP access_ section) if
+   it is not `public`, and save.
+2. Open the **Discovery** tab and click **Scan**.
+3. Gladys broadcasts an SNMP request (a read of `sysName`) on your local
+   network, UDP port 161. Every device that answers shows up, with its SNMP
+   name.
+4. Click **Create** for the ones you want to follow.
+
+Profiles are picked for you: `host` if the device has HOST-RESOURCES (CPU,
+memory, disks), `ups` if it has UPS-MIB. Interfaces and custom OIDs are
+still declared in the list (see below).
+
+Good to know:
+
+- The scan uses SNMP v2c (v1 if you chose v1) and the community of the
+  configuration. It is broadcast to the whole local network: in v1/v2c it
+  travels in clear text anyway.
+- Only port 161 and the local network of the Gladys server are covered. A
+  device that speaks **only SNMP v3**, uses another port or sits behind a
+  router is declared by hand, in the list below.
+- Some devices ignore broadcast requests: add them by hand too.
+- Discovered devices do not need to be in the list: Gladys keeps them. Delete
+  the device in Gladys to stop following it.
+- The scan needs a Gladys with network discovery ("active" scan): on an older
+  version it finds nothing and the log says so.
+
 ## Configuration
 
 Open the **Configuration** tab of the integration.
@@ -220,6 +250,10 @@ battery…).
 
 ## Troubleshooting
 
+- **The scan finds nothing** — check the community and the version in _SNMP
+  access_, and that the device is on the same local network as the Gladys
+  server. A device that ignores broadcast, or speaks only SNMP v3, is
+  declared by hand.
 - **A device stays unreachable** — check that SNMP is on, the community (or
   the v3 user and keys) is right, and that the device accepts requests from
   the address of your Gladys server. Turn **Detailed logs** on and run **Test

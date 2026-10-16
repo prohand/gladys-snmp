@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { createSocket } from 'node:dgram';
 import snmp from 'net-snmp';
 import { normalizeConfig } from '../src/config.js';
+import { encodeGetRequest, isGetResponse } from '../src/snmp/broadcast.js';
 import { createClient, isTimeout } from '../src/snmp/client.js';
 import { toNumber, toText } from '../src/snmp/values.js';
 
@@ -79,4 +80,31 @@ test('no agent listening is a timeout', async (t) => {
   const client = createClient(config.snmpAgents[0], config);
   t.after(() => client.close());
   await assert.rejects(client.get(['1.3.6.1.2.1.1.3.0']), (err) => isTimeout(err));
+});
+
+test('the discovery request is a GET a real agent answers', async (t) => {
+  const port = await freePort();
+  const server = await startAgent(port);
+  t.after(() => server.close());
+
+  for (const version of ['1', '2c']) {
+    const socket = createSocket('udp4');
+    t.after(() => socket.close());
+    const answer = new Promise((resolve) => socket.once('message', resolve));
+    socket.send(
+      encodeGetRequest({
+        version,
+        community: 'public',
+        oids: ['1.3.6.1.2.1.1.5.0'],
+        requestId: 0x12345678,
+      }),
+      port,
+      '127.0.0.1',
+    );
+    const message = await answer;
+    assert.equal(isGetResponse(message), true, `SNMP v${version}`);
+    assert.ok(message.includes(Buffer.from('loopback')), `SNMP v${version}`);
+  }
+  assert.equal(isGetResponse(Buffer.from('not snmp')), false);
+  assert.equal(isGetResponse(Buffer.from([0x30, 0x82, 0xff])), false);
 });

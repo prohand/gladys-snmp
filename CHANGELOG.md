@@ -4,15 +4,20 @@ All notable changes to this integration are documented in this file. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project
 uses [semantic versioning](https://semver.org/).
 
-Describe each change under `## [Unreleased]
-
-## [1.0.1] - 2026-10-14
-
-` as you make it. The Release
+Describe each change under `## [Unreleased]` as you make it. The Release
 workflow moves that section under the version it ships, and the section becomes
 the notes of the version's GitHub Release.
 
 ## [Unreleased]
+
+### Added
+
+- Automatic discovery: the **Scan** of the Discovery tab finds the SNMP agents
+  of the local network (an SNMP GET broadcast through the Gladys core, port
+  161, v1/v2c with the configured community) and picks their `host` / `ups`
+  profiles. Created, they are polled without being added to the agent list.
+
+## [1.0.1] - 2026-10-14
 
 ### Added
 

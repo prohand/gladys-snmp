@@ -25,6 +25,38 @@ QNAP _Servicios de red y archivos → SNMP_, UniFi _Configuración → Sistema �
 SNMP_, MikroTik _IP → SNMP_, un servidor Linux `snmpd`
 (`/etc/snmp/snmpd.conf`), una tarjeta de red Eaton o APC _Network → SNMP_.
 
+## Descubrimiento automático
+
+Lo más sencillo: deje que Gladys encuentre sus equipos.
+
+1. En **Configuración**, indique su **comunidad** (sección _Acceso SNMP_) si
+   no es `public`, y guarde.
+2. Abra la pestaña **Descubrimiento** y pulse **Escanear**.
+3. Gladys envía una petición SNMP (lectura de `sysName`) en broadcast por su
+   red local, puerto UDP 161. Cada equipo que responde aparece, con su nombre
+   SNMP.
+4. Pulse **Crear** en los que quiera seguir.
+
+Los perfiles se eligen solos: `host` si el equipo tiene HOST-RESOURCES (CPU,
+memoria, discos), `ups` si tiene UPS-MIB. Las interfaces y los OID
+personalizados se siguen declarando en la lista (ver más abajo).
+
+Conviene saber:
+
+- El escaneo usa SNMP v2c (v1 si eligió v1) y la comunidad de la
+  configuración. Se envía en broadcast a toda la red local: en v1/v2c viaja
+  en claro de todos modos.
+- Solo cubre el puerto 161 y la red local del servidor Gladys. Un equipo
+  **solo en SNMP v3**, en otro puerto o detrás de un router se declara a
+  mano, en la lista de abajo.
+- Algunos equipos no responden a las peticiones en broadcast: añádalos
+  también a mano.
+- Los equipos descubiertos no necesitan estar en la lista: Gladys los guarda.
+  Elimine el dispositivo en Gladys para dejar de seguirlo.
+- El escaneo necesita un Gladys con descubrimiento de red (escaneo
+  «activo»): en una versión más antigua no encuentra nada y el registro lo
+  indica.
+
 ## Configuración
 
 Abra la pestaña **Configuración** de la integración.
@@ -226,6 +258,10 @@ tiempo activo, CPU, memoria, batería…).
 
 ## Solución de problemas
 
+- **El escaneo no encuentra nada** — compruebe la comunidad y la versión en
+  _Acceso SNMP_, y que el equipo está en la misma red local que el servidor
+  Gladys. Un equipo que ignora el broadcast, o solo en SNMP v3, se declara a
+  mano.
 - **Un equipo sigue inaccesible** — compruebe que SNMP está activado, que la
   comunidad (o el usuario y las claves v3) es correcta y que el equipo acepta
   peticiones desde la dirección de su servidor Gladys. Active los **Registros

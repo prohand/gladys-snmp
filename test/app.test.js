@@ -6,6 +6,7 @@ import { validateWidgetContent } from '@gladysassistant/integration-sdk';
 import { createFakeGladys } from '@gladysassistant/integration-sdk/testing';
 import { registerHandlers } from '../src/app.js';
 import { LANGUAGES } from '../src/i18n.js';
+import { encodeGetRequest } from '../src/snmp/broadcast.js';
 import { FakeAgent, sampleMib } from './helpers/fakeAgent.js';
 
 const AGENTS = JSON.stringify([
@@ -171,5 +172,113 @@ test('a new configuration re-publishes the devices', async () => {
   assert.deepEqual(
     gladys.fake.discoveredDevices.map((device) => device.name),
     ['Router'],
+  );
+});
+
+// --- Network discovery -----------------------------------------------------------
+
+/** What an agent answers to the broadcast: the request, typed GetResponse. */
+function getResponse() {
+  const buffer = encodeGetRequest({
+    version: '2c',
+    community: 'public',
+    oids: ['1.3.6.1.2.1.1.5.0'],
+    requestId: 1,
+  });
+  // SEQUENCE, length, version (3 bytes), community (2 + 6 bytes): the PDU tag.
+  buffer[2 + 3 + 2 + 'public'.length] = 0xa2;
+  return buffer.toString('base64');
+}
+
+async function startWithScan(replies) {
+  const agents = {
+    '192.168.1.50': new FakeAgent(sampleMib()),
+    '192.168.1.60': new FakeAgent({ '1.3.6.1.2.1.1.5.0': 'switch' }),
+    '192.168.1.70': Object.assign(new FakeAgent(), { down: true }),
+  };
+  const fallback = new FakeAgent(sampleMib());
+  const gladys = createFakeGladys({
+    config: { agents: '192.168.1.10;NAS;host' },
+    scanResults: { 'udp-active-broadcast': replies },
+  });
+  const { getConfig } = registerHandlers(gladys, {
+    clientFactory: (agent) => (agents[agent.host] ?? fallback).client(),
+  });
+  await gladys.connect();
+  return { gladys, getConfig, agents };
+}
+
+const reply = (ip, payload = getResponse()) => ({
+  source_ip: ip,
+  source_port: 161,
+  payload_base64: payload,
+});
+
+test('a scan broadcasts a GET on port 161 and lists the agents that answer', async () => {
+  const { gladys } = await startWithScan([
+    reply('192.168.1.60'),
+    reply('192.168.1.50'),
+    reply('192.168.1.50'), // the same agent on two interfaces of the core
+    reply('192.168.1.10'), // already listed
+    reply('192.168.1.70'), // answers the broadcast, not the unicast
+    reply('192.168.1.80', Buffer.from('not snmp').toString('base64')),
+  ]);
+  await gladys.fake.scanRequest();
+
+  const [scan] = gladys.fake.scans;
+  assert.equal(scan.type, 'udp-active-broadcast');
+  assert.equal(scan.port, 161);
+  assert.ok(Buffer.from(scan.payload_base64, 'base64').includes(Buffer.from('public')));
+
+  const devices = gladys.fake.discoveredDevices;
+  assert.deepEqual(
+    devices.map((device) => device.name),
+    ['NAS', 'nas', 'switch'],
+  );
+  const params = Object.fromEntries(devices[1].params.map(({ name, value }) => [name, value]));
+  assert.deepEqual(params, {
+    host: '192.168.1.50',
+    port: '161',
+    version: '2c',
+    profiles: 'system+host+ups',
+    discovered: 'true',
+  });
+  assert.equal(devices[2].params.find(({ name }) => name === 'profiles').value, 'system');
+  // Never a credential in what Gladys stores.
+  assert.doesNotMatch(JSON.stringify(devices), /public/);
+});
+
+test('a discovered agent is polled once created, kept on reconnection, dropped once deleted', async () => {
+  const { gladys, getConfig } = await startWithScan([reply('192.168.1.50')]);
+  await gladys.fake.scanRequest();
+  const device = gladys.fake.discoveredDevices.find(({ name }) => name === 'nas');
+
+  await gladys.fake.deviceCreated(device);
+  assert.ok(getConfig().snmpAgents.some((agent) => agent.host === '192.168.1.50'));
+  assert.deepEqual(await gladys.fake.poll(device), { success: true });
+  assert.equal(gladys.fake.lastState(`${device.external_id}:reachable`), 1);
+  assert.equal(gladys.fake.lastState(`${device.external_id}:ups-charge`), 95);
+
+  // Restarted, the integration rebuilds it from the device Gladys keeps.
+  await gladys.fake.configUpdated({ agents: '192.168.1.10;NAS;host', community: 'other' });
+  const agent = getConfig().snmpAgents.find((entry) => entry.host === '192.168.1.50');
+  assert.equal(agent.name, 'nas');
+  assert.equal(agent.community, 'other');
+  assert.deepEqual(agent.profiles, ['system', 'host', 'ups']);
+  assert.ok(gladys.fake.discoveredDevices.some(({ name }) => name === 'nas'));
+
+  await gladys.fake.deviceDeleted(device);
+  assert.ok(!getConfig().snmpAgents.some((entry) => entry.host === '192.168.1.50'));
+});
+
+test('a failed scan still publishes the listed agents', async () => {
+  const { gladys } = await startWithScan([]);
+  gladys.scanNetwork = async () => {
+    throw new Error('404 Not Found');
+  };
+  await gladys.fake.scanRequest();
+  assert.deepEqual(
+    gladys.fake.discoveredDevices.map((device) => device.name),
+    ['NAS'],
   );
 });
