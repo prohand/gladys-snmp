@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-16
+
 ### Added
 
 - Automatic discovery: the **Scan** of the Discovery tab finds the SNMP agents
@@ -46,5 +48,6 @@ the notes of the version's GitHub Release.
   UI-driven Release workflow, GitHub Releases and Dependabot.
 - `SECURITY.md` and `CLAUDE.md`.
 
-[Unreleased]: https://github.com/prohand/gladys-snmp/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/prohand/gladys-snmp/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/prohand/gladys-snmp/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/prohand/gladys-snmp/releases/tag/v1.0.1
