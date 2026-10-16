@@ -11,6 +11,7 @@ import { applyLogLevel } from './logging.js';
 import { createActions } from './actions.js';
 import { buildDevice, idsFor, oidKey } from './agents/device.js';
 import { AgentMonitor } from './agents/monitor.js';
+import { agentsFromDevices, scanAgents } from './agents/discovery.js';
 import { SceneEvents, createSceneActions } from './capabilities/scenes.js';
 import { createWidgets, refreshWidgets } from './capabilities/widget.js';
 import { createClient } from './snmp/client.js';
@@ -33,14 +34,33 @@ export function registerHandlers(gladys, { clientFactory = createClient, now } =
   const widgets = createWidgets(monitor);
 
   let config = normalizeConfig();
+  // The agents of the typed list; `config.snmpAgents` adds the discovered
+  // agents the user created, so the rest of the code sees one list.
+  let listed = config.snmpAgents;
+  // What the last network scan found, shown in the Discovery screen until the
+  // user creates it (it is polled from then on).
+  let found = [];
 
-  const publishDevices = () =>
-    gladys.publishDiscoveredDevices(config.snmpAgents.map((agent) => buildDevice(gladys, agent)));
+  function refreshAgents() {
+    const ids = new Set(listed.map((agent) => agent.id));
+    const created = agentsFromDevices(gladys, gladys.devices ?? [], config).filter(
+      (agent) => !ids.has(agent.id),
+    );
+    config.snmpAgents = [...listed, ...created];
+    monitor.retain(config.snmpAgents);
+  }
+
+  const publishDevices = () => {
+    const ids = new Set(config.snmpAgents.map((agent) => agent.id));
+    const agents = [...config.snmpAgents, ...found.filter((agent) => !ids.has(agent.id))];
+    return gladys.publishDiscoveredDevices(agents.map((agent) => buildDevice(gladys, agent)));
+  };
 
   async function applyConfig(raw) {
     config = normalizeConfig(raw);
+    listed = config.snmpAgents;
     applyLogLevel(config);
-    monitor.retain(config.snmpAgents);
+    refreshAgents();
     for (const problem of config.agentProblems) {
       logger.warn(`Agent list: ${problem}`);
     }
@@ -69,10 +89,10 @@ export function registerHandlers(gladys, { clientFactory = createClient, now } =
     }
     if (config.snmpAgents.length === 0) {
       await gladys.setConnectionStatus(false, {
-        en: 'No SNMP agent configured yet.',
-        fr: 'Aucun agent SNMP configuré pour le moment.',
-        de: 'Noch kein SNMP-Agent konfiguriert.',
-        es: 'Aún no hay ningún agente SNMP configurado.',
+        en: 'No SNMP agent configured yet: scan the network in the Discovery tab, or list them below.',
+        fr: "Aucun agent SNMP configuré pour le moment : scannez le réseau dans l'onglet Découverte, ou listez-les ci-dessous.",
+        de: 'Noch kein SNMP-Agent konfiguriert: Durchsuche das Netzwerk im Tab Erkennung oder liste sie unten auf.',
+        es: 'Aún no hay ningún agente SNMP configurado: escanee la red en la pestaña Descubrimiento, o enumérelos abajo.',
       });
       return;
     }
@@ -84,7 +104,36 @@ export function registerHandlers(gladys, { clientFactory = createClient, now } =
 
   // --- Discovery ---------------------------------------------------------------
   gladys.onScanRequest(async () => {
+    try {
+      found = await scanAgents(gladys, config, {
+        clientFactory,
+        knownHosts: config.snmpAgents.map((agent) => agent.host),
+      });
+    } catch (err) {
+      // An older Gladys without network scans, or a second scan within 10 s:
+      // the listed agents are still published.
+      logger.warn(`Network scan failed: ${err.message}`);
+    }
     await publishDevices();
+  });
+
+  // A discovered agent becomes polled once created, and stops once deleted.
+  gladys.onDeviceCreated(async (device) => {
+    refreshAgents();
+    await reportConnection();
+    const agent = findAgent(device);
+    if (agent) {
+      monitor
+        .poll(gladys, agent, config)
+        .then(() => refreshWidgets(gladys))
+        .catch((err) => logger.error(`First poll of ${agent.name} failed`, err));
+    }
+  });
+
+  gladys.onDeviceDeleted(async () => {
+    refreshAgents();
+    await reportConnection();
+    refreshWidgets(gladys);
   });
 
   // --- Polling: Gladys polls every created device once a minute ------------------

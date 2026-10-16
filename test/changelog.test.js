@@ -16,6 +16,13 @@ test('the first release moves Unreleased under the version', () => {
   assert.match(rolled, new RegExp(`\\[1\\.0\\.1\\]: ${REPO}/releases/tag/v1\\.0\\.1`));
 });
 
+test('the intro quoting the heading inline is left alone', () => {
+  const intro = 'Describe each change under `## [Unreleased]` as you make it.';
+  const text = `# Changelog\n\n${intro}\n\n## [Unreleased]\n\n- Scan.\n\n[Unreleased]: ${REPO}/compare/v1.0.1...HEAD\n`;
+  const rolled = rollChangelog(text, '1.1.0', '2026-11-01');
+  assert.ok(rolled.includes(`${intro}\n\n## [Unreleased]\n\n## [1.1.0] - 2026-11-01\n\n- Scan.\n`));
+});
+
 test('a release without changes still names its version', () => {
   const text = `## [Unreleased]\n\n[Unreleased]: ${REPO}/compare/v1.0.1...HEAD\n`;
   const rolled = rollChangelog(text, '1.0.2', '2026-11-01');

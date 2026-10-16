@@ -27,6 +27,38 @@ _Paramètres → Système → SNMP_, MikroTik _IP → SNMP_, un serveur Linux
 `snmpd` (`/etc/snmp/snmpd.conf`), une carte réseau Eaton ou APC
 _Network → SNMP_.
 
+## Découverte automatique
+
+Le plus simple : laissez Gladys trouver vos équipements.
+
+1. Dans **Configuration**, indiquez votre **communauté** (section _Accès
+   SNMP_) si ce n'est pas `public`, et enregistrez.
+2. Ouvrez l'onglet **Découverte** et cliquez sur **Scanner**.
+3. Gladys envoie une requête SNMP (lecture de `sysName`) en broadcast sur
+   votre réseau local, port UDP 161. Chaque équipement qui répond apparaît,
+   avec son nom SNMP.
+4. Cliquez sur **Créer** pour ceux que vous voulez suivre.
+
+Les profils sont choisis tout seuls : `host` si l'équipement a
+HOST-RESOURCES (CPU, mémoire, disques), `ups` s'il a UPS-MIB. Les
+interfaces et les OID personnalisés se déclarent toujours dans la liste
+(voir plus bas).
+
+Bon à savoir :
+
+- Le scan utilise SNMP v2c (v1 si vous avez choisi v1) et la communauté de la
+  configuration. Elle part en broadcast sur tout le réseau local : en v1/v2c
+  elle circule de toute façon en clair.
+- Seuls le port 161 et le réseau local du serveur Gladys sont couverts. Un
+  équipement **uniquement en SNMP v3**, sur un autre port ou derrière un
+  routeur se déclare à la main, dans la liste ci-dessous.
+- Certains équipements ne répondent pas aux requêtes en broadcast : ajoutez-les
+  aussi à la main.
+- Les équipements découverts n'ont pas besoin d'être dans la liste : Gladys
+  les garde. Supprimez l'appareil dans Gladys pour arrêter de le suivre.
+- Le scan demande Gladys avec la découverte réseau (scan « actif ») : sur une
+  version plus ancienne, il ne trouve rien et le journal le dit.
+
 ## Configuration
 
 Ouvrez l'onglet **Configuration** de l'intégration.
@@ -233,6 +265,10 @@ direct (temps de réponse, uptime, CPU, mémoire, batterie…).
 
 ## Dépannage
 
+- **Le scan ne trouve rien** — vérifiez la communauté et la version dans
+  _Accès SNMP_, et que l'équipement est sur le même réseau local que le
+  serveur Gladys. Un équipement qui ignore le broadcast, ou en SNMP v3
+  uniquement, se déclare à la main.
 - **Un équipement reste injoignable** — vérifiez que SNMP est activé, que la
   communauté (ou l'utilisateur et les clés v3) est juste, et que l'équipement
   accepte les requêtes de l'adresse de votre serveur Gladys. Activez les

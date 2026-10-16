@@ -37,10 +37,10 @@ Since Gladys 5.1 it also extends the scene editor and the dashboard
 The Configuration screen has three buttons: **Test the connection**, **List
 the interfaces** of an agent, **Walk an OID**.
 
-Agents are declared in the configuration — a short form
-(`192.168.1.10;NAS;host, 192.168.1.20;UPS;ups`) or a JSON list for interfaces,
-custom OIDs and per-agent credentials. See
-[the user documentation](./docs/en.md#configuration).
+Agents are found by the **Scan** of the Discovery tab, or declared in the
+configuration — a short form (`192.168.1.10;NAS;host, 192.168.1.20;UPS;ups`)
+or a JSON list for interfaces, custom OIDs and per-agent credentials. See
+[the user documentation](./docs/en.md#automatic-discovery).
 
 ## How it talks to the hardware
 
@@ -55,6 +55,16 @@ publishes only the values that changed (`publishChangedStates`, with a
 30-minute heartbeat). Gladys polls every minute at most; a slower refresh
 interval is applied by skipping polls.
 
+The scan is the one exception to "straight from the container": a broadcast
+sent from the container never leaves the Docker bridge, so the Gladys core
+sends it (`scanNetwork('udp-active-broadcast')`, port 161 declared in the
+manifest `network_discovery`). The integration forges the SNMP GET of
+`sysName` with the community, the core broadcasts it and relays the answers;
+each agent that answered is then asked in unicast for its name and its
+profiles. A created discovered device keeps its host, port, version and
+profiles in its params (never a credential): that is how it is polled again
+after a restart.
+
 ## Project structure
 
 ```
@@ -68,10 +78,12 @@ interval is applied by skipping polls.
 │  ├─ i18n.js                        # languages of user-facing text (en, fr, de, es)
 │  ├─ snmp/
 │  │  ├─ client.js                   #   net-snmp: get / subtree / set (v1, v2c, v3)
+│  │  ├─ broadcast.js                #   the GET the network scan broadcasts
 │  │  ├─ oids.js                     #   standard OIDs
 │  │  └─ values.js                   #   varbinds -> numbers / texts, counter rates
 │  ├─ agents/
 │  │  ├─ device.js                   #   one agent -> one Gladys device
+│  │  ├─ discovery.js                #   network scan, discovered agents rebuilt from devices
 │  │  └─ monitor.js                  #   polling, states, transitions, SET
 │  └─ capabilities/                  # Gladys 5.1: scenes and dashboard
 │     ├─ scenes.js                   #   triggers + scene actions

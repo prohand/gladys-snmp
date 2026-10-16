@@ -258,6 +258,9 @@ function normalizeAgent(entry, index, defaults, problems) {
     interfaces,
     oids: uniqueOids,
     refresh: Number.isFinite(refresh) && refresh >= 60 ? refresh : null,
+    // Found by the network scan rather than typed in the list: its device
+    // carries what it takes to rebuild it (see src/agents/discovery.js).
+    discovered: entry.discovered === true || entry.discovered === 'true',
   };
 }
 
