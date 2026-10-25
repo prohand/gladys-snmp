@@ -1,6 +1,6 @@
 {
   "name": "gladys-snmp",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "private": true,
   "description": "Gladys Assistant external integration for SNMP devices: switches, routers, NAS, servers and UPS.",
   "type": "module",
