@@ -10,6 +10,24 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+### Added
+
+- Scene action "Wake an SNMP agent up (Wake-on-LAN)": wakes the machine behind
+  an agent (a NAS, a server) by its `mac`, a new field of the JSON agent list
+  (with an optional `wake_address`). The packet is sent by Gladys (manifest
+  `network_wake`).
+- Catalog search keywords (MIB, OID, PDU, PoE, Synology, QNAP, MikroTik,
+  Ubiquiti, Eaton, APC) and the new "servers" catalog shelf.
+
+### Changed
+
+- SDK `@gladysassistant/integration-sdk` updated to 0.16.0.
+- Gladys 5.3.0 or later is now required (manifest `keywords` field).
+- The default category and type of a custom OID come from the SDK constants
+  (same values).
+- CI: the pull-request store check runs with `--skip-image-check`; the Release
+  workflow runs the full check, image included, once the image is published.
+
 ## [1.1.1] - 2026-10-23
 
 - Maintenance release, no functional change.

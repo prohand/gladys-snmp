@@ -25,12 +25,14 @@ One Gladys device per SNMP agent, with:
 | `ups`        | Battery charge, runtime, battery low, mains power, input voltage, load, output power    | UPS-MIB (RFC 1628) |
 | custom OIDs  | Any OID, with its Gladys category, unit and scale — writable ones become switches (SET) | any                |
 
-Since Gladys 5.1 it also extends the scene editor and the dashboard
-(`src/capabilities/`):
+It also extends the scene editor and the dashboard (`src/capabilities/`).
+It requires Gladys 5.3.0 or later.
 
 - **triggers** — an agent stops answering, answers again, an interface goes up
   or down (one event per change);
-- **actions** — read an SNMP value, write an SNMP value, poll an agent now;
+- **actions** — read an SNMP value, write an SNMP value, poll an agent now,
+  wake the machine of an agent up (Wake-on-LAN, sent by the Gladys core:
+  manifest `network_wake`);
 - **widget** — "SNMP agents": agents up, one status row per agent, the live
   values of one agent, and a "Poll now" button.
 
@@ -39,7 +41,8 @@ the interfaces** of an agent, **Walk an OID**.
 
 Agents are found by the **Scan** of the Discovery tab, or declared in the
 configuration — a short form (`192.168.1.10;NAS;host, 192.168.1.20;UPS;ups`)
-or a JSON list for interfaces, custom OIDs and per-agent credentials. See
+or a JSON list for interfaces, custom OIDs, per-agent credentials and the
+Wake-on-LAN MAC address. See
 [the user documentation](./docs/en.md#automatic-discovery).
 
 ## How it talks to the hardware

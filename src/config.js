@@ -245,6 +245,7 @@ function normalizeAgent(entry, index, defaults, problems) {
   });
 
   const refresh = entry.refresh === undefined ? null : Number(entry.refresh);
+  const wake = wakeTarget(entry, where, problems);
 
   return {
     id,
@@ -258,10 +259,52 @@ function normalizeAgent(entry, index, defaults, problems) {
     interfaces,
     oids: uniqueOids,
     refresh: Number.isFinite(refresh) && refresh >= 60 ? refresh : null,
+    // Wake-on-LAN of the machine behind the agent (a NAS, a server): its MAC
+    // address, and the broadcast address to send the magic packet to.
+    mac: wake.mac,
+    wakeAddress: wake.address,
     // Found by the network scan rather than typed in the list: its device
     // carries what it takes to rebuild it (see src/agents/discovery.js).
     discovered: entry.discovered === true || entry.discovered === 'true',
   };
+}
+
+/**
+ * The Wake-on-LAN target of an agent: `mac` (`aa:bb:cc:dd:ee:ff`, with `:`,
+ * `-` or nothing between the bytes) and the optional `wake_address`, an IPv4
+ * broadcast address for a machine that ignores the limited broadcast.
+ */
+function wakeTarget(entry, where, problems) {
+  const target = { mac: null, address: null };
+  if (entry.mac !== undefined && entry.mac !== null && entry.mac !== '') {
+    target.mac = normalizeMac(entry.mac);
+    if (!target.mac) {
+      problems.push(`${where}: "${entry.mac}" is not a MAC address, Wake-on-LAN disabled`);
+    }
+  }
+  if (target.mac && entry.wake_address !== undefined && entry.wake_address !== '') {
+    const address = String(entry.wake_address).trim();
+    if (isIpv4(address)) {
+      target.address = address;
+    } else {
+      problems.push(`${where}: "${entry.wake_address}" is not an IPv4 address, ignored`);
+    }
+  }
+  return target;
+}
+
+/** `AA-BB-CC-DD-EE-FF`, `aabb.ccdd.eeff`, `aabbccddeeff` → `aa:bb:cc:dd:ee:ff`, else null. */
+export function normalizeMac(value) {
+  const hex = String(value).trim().toLowerCase().replace(/[:.-]/g, '');
+  if (!/^[0-9a-f]{12}$/.test(hex)) {
+    return null;
+  }
+  return hex.match(/../g).join(':');
+}
+
+function isIpv4(address) {
+  const parts = address.split('.');
+  return parts.length === 4 && parts.every((part) => /^\d{1,3}$/.test(part) && Number(part) <= 255);
 }
 
 function v3User(entry, defaults) {
@@ -316,12 +359,16 @@ export function normalizeOid(raw, where, problems) {
   const writable = entry.writable === true;
   const binary = writable || entry.on !== undefined || entry.off !== undefined;
 
-  let category = entry.category ?? (writable ? 'switch' : binary ? 'input' : 'unknown');
-  let type = entry.type ?? (binary ? 'binary' : 'unknown');
+  const { SWITCH, INPUT, UNKNOWN } = DEVICE_FEATURE_CATEGORIES;
+  const defaultCategory = writable ? SWITCH : binary ? INPUT : UNKNOWN;
+  let category = entry.category ?? defaultCategory;
+  let type =
+    entry.type ??
+    (binary ? DEVICE_FEATURE_TYPES.SWITCH.BINARY : DEVICE_FEATURE_TYPES.SENSOR.UNKNOWN);
   if (!CATEGORIES.includes(category) || !TYPES.includes(type)) {
     problems.push(`${where}: category "${category}" / type "${type}" unknown, shown as "unknown"`);
-    category = 'unknown';
-    type = 'unknown';
+    category = UNKNOWN;
+    type = DEVICE_FEATURE_TYPES.SENSOR.UNKNOWN;
   }
   let unit = entry.unit ?? null;
   if (unit !== null && !UNITS.includes(unit)) {

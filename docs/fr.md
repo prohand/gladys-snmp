@@ -11,6 +11,8 @@ directement (port UDP 161), rien ne passe par un cloud.
 
 ## Avant de commencer
 
+Cette intégration nécessite **Gladys 5.3.0 ou plus récent**.
+
 Sur chaque équipement, activez SNMP :
 
 - **SNMP v2c** avec une **communauté en lecture seule**, c'est le plus simple.
@@ -152,6 +154,8 @@ Champs d'un agent :
 | `interfaces`                                                                | les interfaces à suivre, par index ou par nom (16 au plus)                                                                       |
 | `oids`                                                                      | vos propres OID, voir ci-dessous                                                                                                 |
 | `refresh`                                                                   | intervalle de rafraîchissement de cet équipement, en secondes (60 minimum)                                                       |
+| `mac`                                                                       | adresse MAC de la machine, pour la réveiller avec l'action de scène **Réveiller un agent SNMP** (Wake-on-LAN)                    |
+| `wake_address`                                                              | adresse de diffusion du paquet Wake-on-LAN (`192.168.1.255`), si la machine ignore celle par défaut                              |
 
 **Interfaces.** Chaque interface donne trois fonctionnalités : lien (1 =
 actif), débit entrant et débit sortant en kbit/s. Utilisez **Lister les
@@ -252,6 +256,11 @@ fonctionnalité.
   couper une prise de PDU, relancer un port PoE… Sorties : `success`, `error`.
 - **Interroger un agent SNMP maintenant** — lit un équipement sans attendre.
   Sorties : `reachable`, `response_time`.
+- **Réveiller un agent SNMP (Wake-on-LAN)** — envoie un paquet Wake-on-LAN à
+  la machine d'un équipement déclaré avec son `mac` dans la forme JSON (un NAS
+  ou un serveur en veille). C'est Gladys qui émet le paquet sur votre réseau.
+  Sorties : `sent`, `error`. `sent` signifie que le paquet est parti, pas que
+  la machine s'est réveillée : interrogez l'agent une minute plus tard.
 
 Une action qui échoue n'arrête jamais la scène : testez `success` (ou
 `reachable`) dans une condition juste après.

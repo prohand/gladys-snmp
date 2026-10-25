@@ -13,6 +13,8 @@
 //   snmp_get            read one OID of an agent, for the following actions
 //   snmp_set            write one OID (a PDU outlet, a PoE port, a reboot OID)
 //   poll_agent          read an agent now, instead of at the next poll
+//   wake_agent          wake the machine behind an agent up (Wake-on-LAN, its
+//                       `mac` in the agent list), sent by the Gladys core
 //
 // A scene action never throws for an SNMP failure: it says so in its outputs
 // (`success`, `error`), and the scene author gates on them — a scene action is
@@ -146,7 +148,30 @@ export function createSceneActions(monitor) {
         return { reachable: false, response_time: null };
       }
     },
+
+    // A NAS or a server that sleeps does not answer SNMP: the machine is woken
+    // by its MAC address. The container cannot broadcast on the LAN, so the
+    // Gladys core emits the magic packet (manifest `network_wake`). `sent`
+    // means the packet left, not that the machine woke up: a scene polls the
+    // agent a minute later (`poll_agent`) to know.
+    async wake_agent(gladys, { fields, config }) {
+      try {
+        const agent = agentOf(gladys, config, fields.device);
+        if (!agent.mac) {
+          return { sent: false, error: 'no "mac" for this agent in the agent list' };
+        }
+        await gladys.wakeOnLan(
+          agent.mac,
+          agent.wakeAddress ? { address: agent.wakeAddress } : undefined,
+        );
+        logger.info(`Wake-on-LAN sent to ${agent.name}`);
+        return { sent: true, error: '' };
+      } catch (err) {
+        logger.warn(`Scene action wake_agent failed: ${describeError(err)}`);
+        return { sent: false, error: describeError(err) };
+      }
+    },
   };
 }
 
-export const SCENE_ACTION_KEYS = ['snmp_get', 'snmp_set', 'poll_agent'];
+export const SCENE_ACTION_KEYS = ['snmp_get', 'snmp_set', 'poll_agent', 'wake_agent'];

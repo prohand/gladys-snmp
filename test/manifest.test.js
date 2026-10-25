@@ -114,9 +114,60 @@ test('scene action outputs are the declared ones', async () => {
 });
 
 test('categories, scene and widget fields require a recent enough Gladys', () => {
-  assert.ok(manifest.categories.length >= 1 && manifest.categories.length <= 3);
   assert.ok(isAtLeast(minGladysVersion(), [4, 86, 0]), 'categories requires >= 4.86.0');
   assert.ok(isAtLeast(minGladysVersion(), [5, 1, 0]), 'scenes and widgets require >= 5.1.0');
+});
+
+test('keywords, countries and music require Gladys >= 5.3.0', () => {
+  if (manifest.keywords || manifest.countries || manifest.music) {
+    assert.ok(isAtLeast(minGladysVersion(), [5, 3, 0]), `got ${manifest.gladys_version}`);
+  }
+});
+
+test('categories are 1 to 3 shelves of the store vocabulary', () => {
+  const vocabulary = [
+    'climate',
+    'lighting',
+    'energy',
+    'security',
+    'multimedia',
+    'appliances',
+    'environment',
+    'protocols',
+    'network',
+    'notifications',
+    'assistants',
+    'services',
+    'transport',
+    'vehicles',
+    'servers',
+    'leisure',
+  ];
+  assert.ok(manifest.categories.length >= 1 && manifest.categories.length <= 3);
+  assert.equal(new Set(manifest.categories).size, manifest.categories.length);
+  for (const category of manifest.categories) {
+    assert.ok(vocabulary.includes(category), `unknown category "${category}"`);
+  }
+});
+
+test('keywords are 1 to 10 unique search terms of 2 to 30 characters', () => {
+  assert.ok(Array.isArray(manifest.keywords));
+  assert.ok(manifest.keywords.length >= 1 && manifest.keywords.length <= 10);
+  const normalized = manifest.keywords.map((keyword) => keyword.trim().toLowerCase());
+  assert.equal(new Set(normalized).size, normalized.length, 'keywords must be unique');
+  for (const keyword of normalized) {
+    assert.ok(keyword.length >= 2 && keyword.length <= 30, `keyword "${keyword}"`);
+  }
+});
+
+test('no countries: SNMP equipment is used worldwide', () => {
+  assert.equal(manifest.countries, undefined);
+});
+
+test('the Wake-on-LAN scene action comes with the network_wake permission', () => {
+  // Without `network_wake: true` the core answers 403 to every wake.
+  assert.ok(keysOf(manifest.scene_actions).includes('wake_agent'));
+  assert.equal(manifest.network_wake, true);
 });
 
 test('SNMP is a local protocol: the manifest declares the local transport only', () => {

@@ -8,7 +8,8 @@ A Gladys Assistant **external integration** (Node 22+, ESM, no build step) that 
 equipment over **SNMP** (v1, v2c, v3) on the local network: switches, routers, Wi-Fi access
 points, NAS, servers, UPS, PDUs, printers. Each SNMP agent becomes one Gladys device. Gladys 5.1+
 adds scene triggers (agent unreachable / recovered, interface up / down), scene actions (SNMP
-GET, SNMP SET, poll now) and an "SNMP agents" dashboard widget.
+GET, SNMP SET, poll now, Wake-on-LAN) and an "SNMP agents" dashboard widget. The manifest
+requires Gladys 5.3.0 (`keywords`).
 
 Two runtime dependencies: `@gladysassistant/integration-sdk` and
 [`net-snmp`](https://github.com/markabrahams/node-net-snmp) (pure JavaScript, no native build).
@@ -80,6 +81,10 @@ src/capabilities/widget.js   the "SNMP agents" widget (Gladys 5.1+)
 - **Discovered agents live in Gladys, not in the list**: a created one is rebuilt from its
   device params (`host`, `port`, `version`, `profiles`, `discovered`) with the credentials of
   the configuration. The list wins on an id clash. A params name is stored: never rename it.
+- **Wake-on-LAN** (`wake_agent` scene action): an agent of the JSON form may carry `mac` (and
+  `wake_address`); the magic packet is emitted by the Gladys core (`gladys.wakeOnLan`, manifest
+  `network_wake: true`, 403 without it) because the container cannot broadcast on the LAN.
+  `sent: true` means the packet left, not that the machine woke up.
 - **Secrets**: communities and v3 keys are never logged, never put in a message or an event.
 - **Tests never touch the network**: `test/helpers/fakeAgent.js` stands in for the client.
   `test/client.test.js` is the only one using real sockets, on 127.0.0.1 only, against a
@@ -90,8 +95,11 @@ src/capabilities/widget.js   the "SNMP agents" widget (Gladys 5.1+)
 `test/manifest.test.js` keeps `gladys-assistant-integration.json` in sync with the code:
 `DEFAULT_CONFIG`, action / scene action / widget handlers, the triggers the code fires and the
 keys their events carry, the scene action outputs, the four languages of every text, the 10–100
-character catalog description, and the `gladys_version` minimum (>= 5.1.0 for scenes and
-widgets).
+character catalog description, the `gladys_version` minimum (>= 5.1.0 for scenes and widgets,
+
+> = 5.3.0 for `keywords` / `countries` / `music`), the `keywords` shape (1–10 unique terms of 2–30
+> characters), no `countries` (SNMP is used worldwide), the categories within the store vocabulary,
+> and `network_wake: true` next to the `wake_agent` scene action.
 
 ## Conventions
 
