@@ -11,6 +11,8 @@ Todo se queda en su red local: Gladys consulta sus equipos directamente
 
 ## Antes de empezar
 
+Esta integración necesita **Gladys 5.3.0 o posterior**.
+
 Active SNMP en cada equipo:
 
 - **SNMP v2c** con una **comunidad de solo lectura** es lo más sencillo. La
@@ -149,6 +151,8 @@ Campos de un agente:
 | `interfaces`                                                                | las interfaces a seguir, por índice o por nombre (16 como máximo)                                                                              |
 | `oids`                                                                      | sus propios OID, vea más abajo                                                                                                                 |
 | `refresh`                                                                   | intervalo de actualización de este equipo, en segundos (60 como mínimo)                                                                        |
+| `mac`                                                                       | dirección MAC de la máquina, para despertarla con la acción de escena **Despertar un agente SNMP** (Wake-on-LAN)                               |
+| `wake_address`                                                              | dirección de difusión del paquete Wake-on-LAN (`192.168.1.255`), si la máquina ignora la predeterminada                                        |
 
 **Interfaces.** Cada interfaz da tres funciones: enlace (1 = activo), tasa de
 entrada y tasa de salida en kbit/s. Use **Listar las interfaces** (más abajo)
@@ -245,6 +249,11 @@ función.
   una toma de una PDU, reiniciar un puerto PoE… Salidas: `success`, `error`.
 - **Consultar un agente SNMP ahora** — lee un equipo sin esperar. Salidas:
   `reachable`, `response_time`.
+- **Despertar un agente SNMP (Wake-on-LAN)** — envía un paquete Wake-on-LAN a
+  la máquina de un equipo declarado con su `mac` en la forma JSON (un NAS o un
+  servidor en reposo). Gladys emite el paquete en su red. Salidas: `sent`,
+  `error`. `sent` significa que el paquete salió, no que la máquina se haya
+  despertado: consulte el agente un minuto después.
 
 Una acción que falla nunca detiene la escena: compruebe `success` (o
 `reachable`) en una condición justo después.

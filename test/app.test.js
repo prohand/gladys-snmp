@@ -127,6 +127,41 @@ test('scene actions: get, set and poll answer with their outputs, never throw', 
   assert.deepEqual(poll.data.outputs, { reachable: false, response_time: null });
 });
 
+test('scene action wake_agent: Wake-on-LAN through the core, by the agent MAC', async () => {
+  const agents = JSON.stringify([
+    { id: 'nas', name: 'NAS', host: '192.168.1.10', mac: 'AA-BB-CC-DD-EE-FF' },
+    {
+      id: 'server',
+      name: 'Server',
+      host: '192.168.1.11',
+      mac: 'aabbccddee00',
+      wake_address: '192.168.1.255',
+    },
+    { id: 'printer', name: 'Printer', host: '192.168.1.30' },
+  ]);
+  const { gladys } = await start({ agents });
+  const deviceOf = (name) =>
+    gladys.fake.discoveredDevices.find((device) => device.name === name).external_id;
+  const wakes = () =>
+    gladys.fake.requests.filter((r) => r.method === 'POST' && r.path.endsWith('/network/wake'));
+
+  const nas = await gladys.fake.sceneAction('wake_agent', { device: deviceOf('NAS') });
+  assert.deepEqual(nas.data.outputs, { sent: true, error: '' });
+  assert.equal(wakes().at(-1).body.mac, 'aa:bb:cc:dd:ee:ff');
+  assert.equal(wakes().at(-1).body.address, undefined);
+
+  const server = await gladys.fake.sceneAction('wake_agent', { device: deviceOf('Server') });
+  assert.equal(server.data.outputs.sent, true);
+  assert.equal(wakes().at(-1).body.mac, 'aa:bb:cc:dd:ee:00');
+  assert.equal(wakes().at(-1).body.address, '192.168.1.255');
+
+  // No MAC: nothing is sent, and the output says why (a scene is never failed).
+  const printer = await gladys.fake.sceneAction('wake_agent', { device: deviceOf('Printer') });
+  assert.equal(printer.data.outputs.sent, false);
+  assert.match(printer.data.outputs.error, /mac/);
+  assert.equal(wakes().length, 2);
+});
+
 test('the widget content is valid, overview and detail', async () => {
   const { gladys, nas } = await start();
   for (const settings of [{}, { device: nas.external_id }]) {

@@ -10,9 +10,21 @@
   },
   "version": "1.1.1",
   "docker_image": "ghcr.io/prohand/gladys-snmp:1.1.1",
-  "gladys_version": ">=5.1.0",
+  "gladys_version": ">=5.3.0",
   "cover_image": "https://raw.githubusercontent.com/prohand/gladys-snmp/main/cover.png",
-  "categories": ["network", "protocols"],
+  "categories": ["network", "servers", "protocols"],
+  "keywords": [
+    "mib",
+    "oid",
+    "pdu",
+    "poe",
+    "synology",
+    "qnap",
+    "mikrotik",
+    "ubiquiti",
+    "eaton",
+    "apc"
+  ],
   "transports": ["local"],
   "network_discovery": [
     {
@@ -20,6 +32,7 @@
       "ports": [161]
     }
   ],
+  "network_wake": true,
   "config_schema": [
     {
       "key": "intro",
@@ -58,10 +71,10 @@
         "es": "Agentes SNMP"
       },
       "description": {
-        "en": "Devices found by the scan need not be listed. Others, separated by commas: host[:port];name;profiles — e.g. 192.168.1.10;NAS;host, 192.168.1.20;UPS;ups. Profiles: interfaces, host, ups (join several with +). For interfaces, custom OIDs or per-device credentials, paste a JSON list instead: see the documentation.",
-        "fr": "Inutile d'y mettre ceux trouvés par le scan. Les autres, séparés par des virgules : hôte[:port];nom;profils — ex. 192.168.1.10;NAS;host, 192.168.1.20;Onduleur;ups. Profils : interfaces, host, ups (plusieurs avec +). Pour les interfaces, des OID personnalisés ou des identifiants par équipement, collez plutôt une liste JSON : voir la documentation.",
-        "de": "Vom Scan gefundene Geräte gehören nicht hierher. Die anderen, durch Kommas getrennt: Host[:Port];Name;Profile — z. B. 192.168.1.10;NAS;host, 192.168.1.20;USV;ups. Profile: interfaces, host, ups (mehrere mit +). Für Schnittstellen, eigene OIDs oder Zugangsdaten pro Gerät füge stattdessen eine JSON-Liste ein: siehe Dokumentation.",
-        "es": "Los equipos hallados por el escaneo no hace falta listarlos. Los demás, separados por comas: host[:puerto];nombre;perfiles — p. ej. 192.168.1.10;NAS;host, 192.168.1.20;SAI;ups. Perfiles: interfaces, host, ups (varios con +). Para interfaces, OID personalizados o credenciales por equipo, pegue una lista JSON: consulte la documentación."
+        "en": "Devices found by the scan need not be listed. Others, separated by commas: host[:port];name;profiles — e.g. 192.168.1.10;NAS;host, 192.168.1.20;UPS;ups. Profiles: interfaces, host, ups (join several with +). For interfaces, custom OIDs, per-device credentials or Wake-on-LAN, paste a JSON list instead: see the documentation.",
+        "fr": "Inutile d'y mettre ceux trouvés par le scan. Les autres, séparés par des virgules : hôte[:port];nom;profils — ex. 192.168.1.10;NAS;host, 192.168.1.20;Onduleur;ups. Profils : interfaces, host, ups (plusieurs avec +). Pour les interfaces, des OID personnalisés, des identifiants par équipement ou le Wake-on-LAN, collez plutôt une liste JSON : voir la documentation.",
+        "de": "Vom Scan gefundene Geräte gehören nicht hierher. Die anderen, durch Kommas getrennt: Host[:Port];Name;Profile — z. B. 192.168.1.10;NAS;host, 192.168.1.20;USV;ups. Profile: interfaces, host, ups (mehrere mit +). Für Schnittstellen, eigene OIDs, Zugangsdaten pro Gerät oder Wake-on-LAN füge stattdessen eine JSON-Liste ein: siehe Dokumentation.",
+        "es": "Los equipos hallados por el escaneo no hace falta listarlos. Los demás, separados por comas: host[:puerto];nombre;perfiles — p. ej. 192.168.1.10;NAS;host, 192.168.1.20;SAI;ups. Perfiles: interfaces, host, ups (varios con +). Para interfaces, OID personalizados, credenciales por equipo o Wake-on-LAN, pegue una lista JSON: consulte la documentación."
       },
       "required": false,
       "placeholder": {
@@ -1018,6 +1031,58 @@
             "fr": "Temps de réponse (ms)",
             "de": "Antwortzeit (ms)",
             "es": "Tiempo de respuesta (ms)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "wake_agent",
+      "label": {
+        "en": "Wake an SNMP agent up (Wake-on-LAN)",
+        "fr": "Réveiller un agent SNMP (Wake-on-LAN)",
+        "de": "SNMP-Agenten aufwecken (Wake-on-LAN)",
+        "es": "Despertar un agente SNMP (Wake-on-LAN)"
+      },
+      "description": {
+        "en": "Send a Wake-on-LAN packet to the machine behind an agent (its \"mac\" in the agent list).",
+        "fr": "Envoie un paquet Wake-on-LAN à la machine derrière un agent (son « mac » dans la liste des agents).",
+        "de": "Sendet ein Wake-on-LAN-Paket an die Maschine hinter einem Agenten (ihr „mac“ in der Agentenliste).",
+        "es": "Envía un paquete Wake-on-LAN a la máquina detrás de un agente (su «mac» en la lista de agentes)."
+      },
+      "timeout_seconds": 15,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "SNMP agent",
+            "fr": "Agent SNMP",
+            "de": "SNMP-Agent",
+            "es": "Agente SNMP"
+          },
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "key": "sent",
+          "type": "boolean",
+          "label": {
+            "en": "Packet sent",
+            "fr": "Paquet envoyé",
+            "de": "Paket gesendet",
+            "es": "Paquete enviado"
+          }
+        },
+        {
+          "key": "error",
+          "type": "string",
+          "label": {
+            "en": "Error",
+            "fr": "Erreur",
+            "de": "Fehler",
+            "es": "Error"
           }
         }
       ]

@@ -4,6 +4,7 @@ import {
   DEFAULT_COMMUNITY,
   DEFAULT_CONFIG,
   normalizeConfig,
+  normalizeMac,
   parseAgents,
   sanitizeId,
   splitHostPort,
@@ -136,4 +137,32 @@ test('host:port, [ipv6]:port and bare IPv6 addresses', () => {
 test('ids keep only what an external id can carry', () => {
   assert.equal(sanitizeId('FE80::1'), 'fe80-1');
   assert.equal(sanitizeId('  My Switch '), 'my-switch');
+});
+
+test('Wake-on-LAN: the MAC address in every usual form, the broadcast address checked', () => {
+  assert.equal(normalizeMac('AA:BB:CC:DD:EE:FF'), 'aa:bb:cc:dd:ee:ff');
+  assert.equal(normalizeMac('aa-bb-cc-dd-ee-ff'), 'aa:bb:cc:dd:ee:ff');
+  assert.equal(normalizeMac('aabb.ccdd.eeff'), 'aa:bb:cc:dd:ee:ff');
+  assert.equal(normalizeMac('aabbccddeeff'), 'aa:bb:cc:dd:ee:ff');
+  assert.equal(normalizeMac('aa:bb:cc:dd:ee'), null);
+  assert.equal(normalizeMac('not a mac'), null);
+
+  const { agents, problems } = parseAgents([
+    { host: '10.0.0.1', mac: 'AA-BB-CC-DD-EE-FF', wake_address: '10.0.0.255' },
+    { host: '10.0.0.2', mac: 'zz', wake_address: '10.0.0.255' },
+    { host: '10.0.0.3', mac: 'aabbccddeeff', wake_address: '10.0.0.256' },
+    { host: '10.0.0.4' },
+  ]);
+  assert.deepEqual(
+    agents.map((agent) => [agent.mac, agent.wakeAddress]),
+    [
+      ['aa:bb:cc:dd:ee:ff', '10.0.0.255'],
+      [null, null],
+      ['aa:bb:cc:dd:ee:ff', null],
+      [null, null],
+    ],
+  );
+  assert.equal(problems.length, 2);
+  assert.match(problems[0], /Agent #2: "zz" is not a MAC address/);
+  assert.match(problems[1], /Agent #3: "10.0.0.256" is not an IPv4 address/);
 });

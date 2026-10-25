@@ -11,6 +11,8 @@ Everything stays on your local network: Gladys asks your devices directly
 
 ## Before you start
 
+This integration needs **Gladys 5.3.0 or later**.
+
 On each device, enable SNMP:
 
 - **SNMP v2c** with a **read-only community** is the simplest. The community
@@ -147,6 +149,8 @@ Fields of an agent:
 | `interfaces`                                                                | the interfaces to follow, by index or by name (up to 16)                                                            |
 | `oids`                                                                      | your own OIDs, see below                                                                                            |
 | `refresh`                                                                   | refresh interval of this device, in seconds (60 minimum)                                                            |
+| `mac`                                                                       | MAC address of the machine, to wake it up with the **Wake an SNMP agent up** scene action (Wake-on-LAN)             |
+| `wake_address`                                                              | broadcast address of the Wake-on-LAN packet (`192.168.1.255`), when the machine ignores the default one             |
 
 **Interfaces.** Each interface gives three features: link (1 = up), in rate
 and out rate in kbit/s. Use **List the interfaces** (below) to find the
@@ -237,6 +241,11 @@ For a threshold (a disk over 90 %, a battery under 30 %), use the usual
   a PDU outlet off, reset a PoE port… Outputs: `success`, `error`.
 - **Poll an SNMP agent now** — read a device without waiting. Outputs:
   `reachable`, `response_time`.
+- **Wake an SNMP agent up (Wake-on-LAN)** — sends a Wake-on-LAN packet to
+  the machine of a device declared with its `mac` in the JSON form (a NAS or
+  a server that sleeps). Gladys sends the packet on your network. Outputs:
+  `sent`, `error`. `sent` means the packet left, not that the machine woke
+  up: poll the agent a minute later to know.
 
 An action that fails never stops the scene: test `success` (or `reachable`)
 in a condition after it.

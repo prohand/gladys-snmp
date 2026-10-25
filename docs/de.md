@@ -11,6 +11,8 @@ Alles bleibt in deinem lokalen Netzwerk: Gladys fragt deine Geräte direkt ab
 
 ## Bevor du beginnst
 
+Diese Integration benötigt **Gladys 5.3.0 oder neuer**.
+
 Aktiviere SNMP auf jedem Gerät:
 
 - **SNMP v2c** mit einer **Read-only-Community** ist am einfachsten. Die
@@ -150,6 +152,8 @@ Felder eines Agenten:
 | `interfaces`                                                                | die zu verfolgenden Schnittstellen, per Index oder Name (höchstens 16)                                                                     |
 | `oids`                                                                      | eigene OIDs, siehe unten                                                                                                                   |
 | `refresh`                                                                   | Aktualisierungsintervall dieses Geräts, in Sekunden (mindestens 60)                                                                        |
+| `mac`                                                                       | MAC-Adresse der Maschine, um sie mit der Szenenaktion **SNMP-Agenten aufwecken** zu wecken (Wake-on-LAN)                                   |
+| `wake_address`                                                              | Broadcast-Adresse des Wake-on-LAN-Pakets (`192.168.1.255`), wenn die Maschine die Standardadresse ignoriert                                |
 
 **Schnittstellen.** Jede Schnittstelle liefert drei Funktionen: Link (1 =
 aktiv), eingehende und ausgehende Rate in kbit/s. Mit **Schnittstellen
@@ -245,6 +249,12 @@ den üblichen Gladys-Auslöser **Gerätewert** auf der Funktion.
   `success`, `error`.
 - **SNMP-Agent jetzt abfragen** — liest ein Gerät ohne zu warten. Ausgaben:
   `reachable`, `response_time`.
+- **SNMP-Agenten aufwecken (Wake-on-LAN)** — sendet ein Wake-on-LAN-Paket an
+  die Maschine eines Geräts, das in der JSON-Form mit seiner `mac` angegeben
+  ist (ein NAS oder ein Server im Ruhezustand). Gladys sendet das Paket in
+  deinem Netzwerk. Ausgaben: `sent`, `error`. `sent` heißt, dass das Paket
+  gesendet wurde, nicht dass die Maschine aufgewacht ist: Frage den Agenten
+  eine Minute später ab.
 
 Eine fehlgeschlagene Aktion stoppt die Szene nie: Prüfe `success` (oder
 `reachable`) in einer Bedingung danach.
